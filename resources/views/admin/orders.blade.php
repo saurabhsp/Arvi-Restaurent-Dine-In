@@ -69,7 +69,7 @@
     function render(data) {
         const rows = data.orders.map(order => `<tr><td><strong>${text(order.order_number)}</strong></td><td>${text(order.customer_name)}</td><td>${text(order.customer_phone||'-')}</td><td style="white-space:nowrap">${order.items.map(item=>`&bull; ${text(item.product_name)} x ${item.quantity} (${money(item.line_total)})`).join(' ')}</td><td><form data-order="${order.id}" data-field="payment_status">${choices(order.payment_status,[['paid','Paid'],['unpaid','Unpaid'],['credit','Credit (Udhari)']])}</form></td><td><form data-order="${order.id}" data-field="payment_method">${choices(order.payment_method,[['cash','Cash'],['upi','UPI'],['card','Card']])}</form></td><td>${money(order.total)}</td><td><a class="btn" target="_blank" href="${invoiceBase}/${order.id}/invoice">Print</a></td></tr>`).join('');
         ordersBody.innerHTML = rows || '<tr><td colspan="8" class="muted">No orders for this date.</td></tr>';
-        document.querySelector('#refresh-note').textContent = `Updated at ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}. Live refresh every 2 seconds.`
+        document.querySelector('#refresh-note').textContent = `Updated at ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`
     }
     ordersBody.addEventListener('change', async event => {
         const select = event.target.closest('[data-order-select]');
