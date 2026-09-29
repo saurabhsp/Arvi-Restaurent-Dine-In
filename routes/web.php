@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [MenuController::class, 'index'])->name('home');
 Route::post('/start', [MenuController::class, 'start'])->name('start');
 Route::post('/orders', [MenuController::class, 'order'])->name('orders.store');
+Route::get('/order/confirmation', [MenuController::class, 'confirmation'])->name('orders.confirmation');
 Route::get('/admin/login', [AdminController::class, 'loginForm'])->name('admin.login');
 Route::get('/login', fn() => redirect()->route('admin.login'))->name('login');
 Route::post('/admin/login', [AdminController::class, 'login'])->name('admin.login.submit');
