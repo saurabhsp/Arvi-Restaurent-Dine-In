@@ -25,8 +25,9 @@ class AdminController extends Controller {
         }
         return back()->withErrors(['username'=>'Invalid admin credentials.'])->onlyInput('username');
     }
-    public function createForm() { return view('admin.create'); }
+    public function createForm() { abort_if(AdminUser::exists(), 404); return view('admin.create'); }
     public function storeAdmin(Request $r) {
+        abort_if(AdminUser::exists(), 404);
         $data=$r->validate([
             'name'=>'required|string|min:2|max:100',
             'username'=>'required|string|min:3|max:50|alpha_dash|unique:admin_users,username',
@@ -36,7 +37,7 @@ class AdminController extends Controller {
         AdminUser::create(['name'=>trim($data['name']),'username'=>strtolower($data['username']),'password'=>Hash::make($data['password']),'mobile'=>trim($data['mobile'])]);
         return redirect()->route('admin.login')->with('success','Admin account created. Please log in.');
     }
-    public function logout(Request $r) { $r->session()->forget(['admin_user_id','admin_name']); $r->session()->regenerateToken(); return redirect()->route('admin.login'); }
+    public function logout(Request $r) { $r->session()->invalidate(); $r->session()->regenerateToken(); return redirect()->route('admin.login'); }
     public function dashboard(Request $r) {
         $date = $this->dashboardDate($r);
         return view('admin.dashboard', array_merge($this->dashboardPayload($date), ['categories'=>Category::count(),'products'=>Product::count()]));
@@ -55,9 +56,18 @@ class AdminController extends Controller {
     public function upiQr() { return view('admin.upi-qr', ['paymentQrCode'=>PaymentQrCode::first()]); }
     public function uploadUpiQr(Request $r) {
         if (PaymentQrCode::exists()) return back()->withErrors(['qr'=>'Delete the existing QR code before uploading another one.']);
-        $data=$r->validate(['qr_image'=>'required|image|mimes:png,jpg,jpeg,webp|max:4096']);
+        $data=$r->validate([
+            'qr_image'=>'required|image|mimes:png,jpg,jpeg,webp|max:4096',
+            'upi_id'=>['required','string','max:100','regex:/^[A-Za-z0-9._-]+@[A-Za-z0-9.-]+$/'],
+            'payee_name'=>'required|string|max:100',
+        ]);
         $path=$data['qr_image']->store('payment-qr','public');
-        PaymentQrCode::create(['image_path'=>$path]);
+        try {
+            PaymentQrCode::create(['image_path'=>$path,'upi_id'=>$data['upi_id'],'payee_name'=>trim($data['payee_name'])]);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+            Storage::disk('public')->delete($path);
+            return back()->withErrors(['qr'=>'A QR code is already active. Delete it before uploading another one.']);
+        }
         return back()->with('success','UPI QR code uploaded.');
     }
     public function deleteUpiQr(PaymentQrCode $paymentQrCode) {

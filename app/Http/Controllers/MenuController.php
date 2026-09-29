@@ -44,6 +44,24 @@ class MenuController extends Controller {
             ]);
             $order->items()->createMany($rows); return $order;
         });
-        return redirect()->route('home')->with('success','Order '.$order->order_number.' placed. Thank you!');
+        $request->session()->put('customer_order_id', $order->id);
+        return redirect()->route('orders.confirmation');
+    }
+    public function confirmation(Request $request) {
+        $orderId=$request->session()->get('customer_order_id');
+        abort_unless($orderId, 404);
+        $order=Order::with('items')->findOrFail($orderId);
+        $paymentQrCode=$order->payment_method==='upi' ? PaymentQrCode::first() : null;
+        $upiUrl=null;
+        if ($paymentQrCode?->upi_id) {
+            $upiUrl='upi://pay?'.http_build_query([
+                'pa'=>$paymentQrCode->upi_id,
+                'pn'=>$paymentQrCode->payee_name ?: 'Restaurant',
+                'am'=>number_format((float)$order->total, 2, '.', ''),
+                'cu'=>'INR',
+                'tn'=>$order->order_number,
+            ], '', '&', PHP_QUERY_RFC3986);
+        }
+        return view('order-confirmation', compact('order','paymentQrCode','upiUrl'));
     }
 }
