@@ -1,15 +1,13 @@
 @extends('layout')
-@section('title','My Orders')
+@section('title',__('My Orders'))
 @section('content')
 @include('admin.nav')
 <style>
-    .orders-table {
-        min-width: 1120px
-    }
+    .orders-table { min-width:0; width:100%; table-layout:fixed }
 
     .orders-table .inline-order-select {
-        width: 150px !important;
-        min-width: 150px !important
+        width: 100% !important;
+        min-width: 0 !important
     }
 
     .orders-table td {
@@ -18,30 +16,30 @@
 
     .save-state {
         min-height: 20px;
-        color: #745f50
+        color: var(--muted)
     }
 </style>
 <div class="row" style="justify-content:space-between;margin-top:24px">
     <div>
-        <p class="muted" style="margin:0">LIVE ORDER LIST</p>
-        <h1 style="margin-top:4px">My Orders</h1>
-    </div><label style="margin:0;min-width:180px">Order date<input id="order-date" type="date" value="{{ $date }}"></label>
+        <p class="muted" style="margin:0">{{ __('LIVE ORDER LIST') }}</p>
+        <h1 style="margin-top:4px">{{ __('My Orders') }}</h1>
+    </div><label style="margin:0;min-width:180px">{{ __('Order date') }}<input id="order-date" type="date" value="{{ $date }}"></label>
 </div>
 <section class="panel">
-    <p class="muted" id="refresh-note">New orders appear automatically.</p>
+    <p class="muted" id="refresh-note">{{ __('New orders appear automatically.') }}</p>
     <p class="save-state" id="save-state" aria-live="polite"></p>
     <div class="table-wrap">
         <table class="orders-table">
             <thead>
                 <tr>
-                    <th>Order ID</th>
-                    <th>Customer name</th>
-                    <th>Mobile number</th>
-                    <th>Items x qty / price</th>
-                    <th>Payment status</th>
-                    <th>Pay via</th>
-                    <th>Total</th>
-                    <th>Print</th>
+                    <th>{{ __('Order ID') }}</th>
+                    <th>{{ __('Customer name') }}</th>
+                    <th>{{ __('Mobile number') }}</th>
+                    <th>{{ __('Items x qty / price') }}</th>
+                    <th>{{ __('Payment status') }}</th>
+                    <th>{{ __('Pay via') }}</th>
+                    <th>{{ __('Total') }}</th>
+                    <th>{{ __('Print') }}</th>
                 </tr>
             </thead>
             <tbody id="orders-body"></tbody>
@@ -63,13 +61,14 @@
         '"': '&quot;',
         "'": '&#039;'
     } [char]));
-    const money = value => `Rs. ${Number(value||0).toFixed(2)}`;
+    const money = value => `₹${Number(value||0).toFixed(2)}`;
+    const labels = @json(['paid'=>__('Paid'),'unpaid'=>__('Unpaid'),'credit'=>__('Credit (Udhari)'),'cash'=>__('Cash'),'upi'=>'UPI','card'=>__('Card'),'print'=>__('Print'),'empty'=>__('No orders for this date.'),'updated'=>__('Updated at'),'saving'=>__('Saving change...'),'saved'=>__('Saved.'),'saveError'=>__('Could not save. Please try again.'),'waiting'=>__('Waiting for connection...')]);
     const choices = (selected, values) => `<select class="inline-order-select" data-order-select>${values.map(([value,label])=>`<option value="${value}" ${selected===value?'selected':''}>${label}</option>`).join('')}</select>`;
 
     function render(data) {
-        const rows = data.orders.map(order => `<tr><td><strong>${text(order.order_number)}</strong></td><td>${text(order.customer_name)}</td><td>${text(order.customer_phone||'-')}</td><td style="white-space:nowrap">${order.items.map(item=>`&bull; ${text(item.product_name)} x ${item.quantity} (${money(item.line_total)})`).join(' ')}</td><td><form data-order="${order.id}" data-field="payment_status">${choices(order.payment_status,[['paid','Paid'],['unpaid','Unpaid'],['credit','Credit (Udhari)']])}</form></td><td><form data-order="${order.id}" data-field="payment_method">${choices(order.payment_method,[['cash','Cash'],['upi','UPI'],['card','Card']])}</form></td><td>${money(order.total)}</td><td><a class="btn" target="_blank" href="${invoiceBase}/${order.id}/invoice">Print</a></td></tr>`).join('');
-        ordersBody.innerHTML = rows || '<tr><td colspan="8" class="muted">No orders for this date.</td></tr>';
-        document.querySelector('#refresh-note').textContent = `Updated at ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`
+        const rows = data.orders.map(order => `<tr><td><strong>${text(order.order_number)}</strong></td><td>${text(order.customer_name)}</td><td>${text(order.customer_phone||'-')}</td><td>${order.items.map(item=>`&bull; ${text(item.product_name)} x ${item.quantity} (${money(item.line_total)})`).join(' ')}</td><td><form data-order="${order.id}" data-field="payment_status">${choices(order.payment_status,[['paid',labels.paid],['unpaid',labels.unpaid],['credit',labels.credit]])}</form></td><td><form data-order="${order.id}" data-field="payment_method">${choices(order.payment_method,[['cash',labels.cash],['upi',labels.upi],['card',labels.card]])}</form></td><td>${money(order.total)}</td><td><a class="btn" target="_blank" href="${invoiceBase}/${order.id}/invoice">${labels.print}</a></td></tr>`).join('');
+        ordersBody.innerHTML = rows || `<tr><td colspan="8" class="muted">${labels.empty}</td></tr>`;
+        document.querySelector('#refresh-note').textContent = `${labels.updated} ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`
     }
     ordersBody.addEventListener('change', async event => {
         const select = event.target.closest('[data-order-select]');
@@ -79,7 +78,7 @@
         body[form.dataset.field] = select.value;
         isSaving = true;
         select.disabled = true;
-        saveState.textContent = 'Saving change...';
+        saveState.textContent = labels.saving;
         try {
             const response = await fetch(`${invoiceBase}/${form.dataset.order}`, {
                 method: 'PATCH',
@@ -91,10 +90,10 @@
                 body: JSON.stringify(body)
             });
             if (!response.ok) throw new Error('Save failed');
-            saveState.textContent = 'Saved.';
+            saveState.textContent = labels.saved;
             await loadOrders()
         } catch (error) {
-            saveState.textContent = 'Could not save. Please try again.';
+            saveState.textContent = labels.saveError;
             select.disabled = false
         } finally {
             isSaving = false
@@ -110,7 +109,7 @@
             });
             if (response.ok) render(await response.json())
         } catch (error) {
-            document.querySelector('#refresh-note').textContent = 'Waiting for connection...'
+            document.querySelector('#refresh-note').textContent = labels.waiting
         }
     }
     dateInput.addEventListener('change', loadOrders);

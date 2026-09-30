@@ -18,17 +18,31 @@ class MenuController extends Controller {
     public function start(Request $request) {
         $data=$request->validate([
             'name'=>'required|string|min:2|max:100',
-            'phone'=>'nullable|string|max:20',
+            'phone'=>'nullable|digits:10',
             'payment_method'=>'required|in:cash,upi,card',
         ]);
+        if (filled($data['phone'] ?? null)) $request->session()->put('customer_phone', trim($data['phone']));
         return redirect()->route('home')->with('order_details', [
             'name'=>trim($data['name']),
             'phone'=>filled($data['phone'] ?? null) ? trim($data['phone']) : null,
             'payment_method'=>$data['payment_method'],
         ]);
     }
+    public function openHistory(Request $request) {
+        abort_if($request->session()->has('admin_user_id'), 403);
+        $data=$request->validate(['phone'=>['required','regex:/^[0-9]{10}$/']]);
+        $request->session()->put('customer_phone', $data['phone']);
+        return redirect()->route('history');
+    }
+    public function history(Request $request) {
+        abort_if($request->session()->has('admin_user_id'), 403);
+        $phone=$request->session()->get('customer_phone');
+        if (!$phone) return redirect()->route('home');
+        $orders=Order::with('items.product')->where('customer_phone',$phone)->latest()->paginate(10);
+        return view('history', compact('orders','phone'));
+    }
     public function order(Request $request) {
-        $data=$request->validate(['name'=>'required|string|min:2|max:100','phone'=>'nullable|string|max:20','payment_method'=>'required|in:cash,upi,card','items'=>'required|array|min:1','items.*.id'=>'required|integer|distinct','items.*.quantity'=>'required|integer|min:1|max:50']);
+        $data=$request->validate(['name'=>'required|string|min:2|max:100','phone'=>'nullable|digits:10','payment_method'=>'required|in:cash,upi,card','items'=>'required|array|min:1','items.*.id'=>'required|integer|distinct','items.*.quantity'=>'required|integer|min:1|max:50']);
         $ids=collect($data['items'])->pluck('id');
         $products=Product::whereIn('id',$ids)->where('is_available',true)->whereHas('category',fn($q)=>$q->where('is_active',true))->get()->keyBy('id');
         if ($products->count()!==$ids->count()) throw ValidationException::withMessages(['items'=>'A selected item is no longer available. Please refresh the menu.']);
@@ -45,6 +59,7 @@ class MenuController extends Controller {
             $order->items()->createMany($rows); return $order;
         });
         $request->session()->put('customer_order_id', $order->id);
+        if ($order->customer_phone) $request->session()->put('customer_phone', $order->customer_phone);
         return redirect()->route('orders.confirmation');
     }
     public function confirmation(Request $request) {

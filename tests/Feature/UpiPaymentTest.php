@@ -71,5 +71,10 @@ class UpiPaymentTest extends TestCase
             ->assertOk()
             ->assertSee('Scan to pay with UPI')
             ->assertSee('payment-qr/restaurant.png');
+
+        $order->update(['payment_status' => 'paid']);
+        $this->get(route('admin.orders.invoice', $order))
+            ->assertOk()
+            ->assertDontSee('payment-qr/restaurant.png');
     }
 }
