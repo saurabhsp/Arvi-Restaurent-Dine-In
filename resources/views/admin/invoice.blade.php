@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Invoice {{ $order->order_number }}</title>
+    <title>{{ __('Invoice') }} {{ $order->order_number }}</title>
     <style>
         *{box-sizing:border-box}body{margin:0;background:#eee;color:#23170f;font:13px Arial,sans-serif}
         .receipt{width:80mm;min-height:120mm;margin:20px auto;background:#fff;padding:7mm}
@@ -15,21 +15,21 @@
     </style>
 </head>
 <body>
-<button class="print" type="button" onclick="window.print()">Print invoice</button>
+<button class="print" type="button" onclick="window.print()">{{ __('Print invoice') }}</button>
 <article class="receipt">
-    <div class="center"><div class="brand">DINE IN</div><p class="muted">Customer bill</p></div>
-    <p>Bill no: {{ $order->order_number }}<br>Date: {{ $order->created_at->format('d M Y, h:i A') }}</p>
-    <p><strong>{{ $order->customer_name }}</strong><br>{{ $order->customer_phone ?: 'Mobile not provided' }}</p>
-    <table><thead><tr><th>Item</th><th>Amount</th></tr></thead><tbody>
+    <div class="center"><div class="brand">DINE IN</div><p class="muted">{{ __('Customer bill') }}</p></div>
+    <p>{{ __('Bill no') }}: {{ $order->order_number }}<br>{{ __('Date') }}: {{ $order->created_at->format('d M Y, h:i A') }}</p>
+    <p><strong>{{ $order->customer_name }}</strong><br>{{ $order->customer_phone ?: __('Mobile not provided') }}</p>
+    <table><thead><tr><th>{{ __('Item') }}</th><th>{{ __('Amount') }}</th></tr></thead><tbody>
     @foreach($order->items as $item)
-        <tr><td>{{ $item->product_name }}<br><span class="muted">{{ $item->quantity }} x Rs. {{ number_format($item->unit_price,2) }}</span></td><td>Rs. {{ number_format($item->line_total,2) }}</td></tr>
+        <tr><td>{{ $item->product_name }}<br><span class="muted">{{ $item->quantity }} × ₹{{ number_format($item->unit_price,2) }}</span></td><td>₹{{ number_format($item->line_total,2) }}</td></tr>
     @endforeach
     </tbody></table>
-    <div class="total"><span>Total</span><span>Rs. {{ number_format($order->total,2) }}</span></div>
-    @if($order->payment_method === 'upi' && $paymentQrCode)
-        <div class="payment-qr"><strong>{{ $order->payment_status === 'paid' ? 'UPI payment QR' : 'Scan to pay with UPI' }}</strong><img src="{{ asset('storage/'.$paymentQrCode->image_path) }}" alt="UPI payment QR code"><p>{{ $order->payment_status === 'paid' ? 'Paid' : 'Pay' }} Rs. {{ number_format($order->total,2) }}</p>@if($paymentQrCode->upi_id)<p>{{ $paymentQrCode->upi_id }}</p>@endif</div>
+    <div class="total"><span>{{ __('Total') }}</span><span>₹{{ number_format($order->total,2) }}</span></div>
+    @if($order->payment_method === 'upi' && $order->payment_status !== 'paid' && $paymentQrCode)
+        <div class="payment-qr"><strong>{{ __('Scan to pay with UPI') }}</strong><img src="{{ asset('storage/'.$paymentQrCode->image_path) }}" alt="{{ __('UPI payment QR code') }}"><p>{{ __('Pay') }} ₹{{ number_format($order->total,2) }}</p>@if($paymentQrCode->upi_id)<p>{{ $paymentQrCode->upi_id }}</p>@endif</div>
     @endif
-    <p class="center muted">{{ ucfirst($order->payment_status) }} via {{ strtoupper($order->payment_method) }}<br>Thank you. Please visit again.</p>
+    <p class="center muted">{{ __(ucfirst($order->payment_status)) }} · {{ strtoupper($order->payment_method) }}<br>{{ __('Thank you. Please visit again.') }}</p>
 </article>
 <script>window.addEventListener('load',()=>{const image=document.querySelector('.payment-qr img');if(image&&!image.complete){image.addEventListener('load',()=>window.print(),{once:true})}else{window.print()}})</script>
 </body>

@@ -2,6 +2,8 @@
 
 A Laravel 12 dine in menu for PHP 8.2 or newer. Customers can order without an account. Admins manage categories, products, orders, and one UPI payment QR code.
 
+The site supports English and Marathi interface text, a day/night theme, a compact mobile menu, and horizontal product browsing on phones. Admins can enter Marathi names and descriptions alongside English menu data; when a Marathi field is empty, the English value is shown.
+
 ## Local setup
 
 1. Install PHP 8.2+, Composer, and either SQLite or MySQL. Enable PHP extensions required by Laravel, including `pdo_sqlite` or `pdo_mysql` and `fileinfo`. Enable `gd` for the test suite.
@@ -18,6 +20,12 @@ Create the **first** admin account at `/admin/create.php`. After that account ex
 Open **Admin → UPI QR** and upload a clear, tightly cropped QR image. Enter the UPI ID and payee name **that match the image**. Only one QR can be active; delete it before uploading a replacement. No payment image is bundled with this repository.
 
 When a customer selects UPI, the menu shows the QR. After ordering, the confirmation page shows the final amount and a standard `upi://pay` link. On supported phones, it opens the installed UPI app chooser, including apps such as GPay or PhonePe. The customer can also scan the QR from another device. A static QR may not include the exact order amount, so the customer should check the displayed total. The site does **not** verify the bank transfer; all customer orders start **unpaid** until an admin changes their payment status. UPI invoices display the QR below the total.
+
+Paid UPI invoices omit the payment QR to avoid asking the customer to pay twice.
+
+## Customer order history
+
+On the customer menu, entering a 10 digit mobile number reveals **View history**. The history page lists orders, dates, times, items, amounts, and payment status for that exact number, including an empty state. No customer account or SMS verification is used, so anyone who knows a mobile number could look up its orders. Add phone verification before using this with sensitive customer data.
 
 ## Move to another PC
 

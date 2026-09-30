@@ -46,9 +46,9 @@ class AdminController extends Controller {
     public function invoice(Order $order) { return view('admin.invoice', ['order'=>$order->load('items'),'paymentQrCode'=>PaymentQrCode::first()]); }
     public function categories() { return view('admin.categories',['categories'=>Category::withCount('products')->orderBy('sort_order')->get()]); }
     public function saveCategory(Request $r) {
-        $d=$r->validate(['id'=>'nullable|exists:categories,id','name'=>'required|string|max:100','description'=>'nullable|string|max:1000','sort_order'=>'nullable|integer|min:0']);
+        $d=$r->validate(['id'=>'nullable|exists:categories,id','name'=>'required|string|max:100','name_mr'=>'nullable|string|max:100','description'=>'nullable|string|max:1000','description_mr'=>'nullable|string|max:1000','sort_order'=>'nullable|integer|min:0']);
         $category=isset($d['id'])?Category::findOrFail($d['id']):new Category;
-        $category->fill(['name'=>$d['name'],'description'=>$d['description']??null,'sort_order'=>$d['sort_order']??0,'is_active'=>$r->boolean('is_active')])->save();
+        $category->fill(['name'=>$d['name'],'name_mr'=>$d['name_mr']??null,'description'=>$d['description']??null,'description_mr'=>$d['description_mr']??null,'sort_order'=>$d['sort_order']??0,'is_active'=>$r->boolean('is_active')])->save();
         return back()->with('success','Category saved.');
     }
     public function deleteCategory(Category $category) { if($category->products()->exists()) return back()->withErrors(['category'=>'Remove or move its products first.']); $category->delete(); return back()->with('success','Category deleted.'); }
@@ -95,10 +95,10 @@ class AdminController extends Controller {
         return redirect()->route('admin.orders.invoice',$order)->with('success','Order '.$order->order_number.' created.');
     }
     public function saveProduct(Request $r) {
-        $d=$r->validate(['id'=>'nullable|exists:products,id','category_id'=>'required|exists:categories,id','name'=>'required|string|max:150','description'=>'nullable|string|max:2000','price'=>'required|numeric|min:0|max:99999999','image'=>'nullable|image|mimes:jpeg,png,webp|max:4096','sort_order'=>'nullable|integer|min:0']);
+        $d=$r->validate(['id'=>'nullable|exists:products,id','category_id'=>'required|exists:categories,id','name'=>'required|string|max:150','name_mr'=>'nullable|string|max:150','description'=>'nullable|string|max:2000','description_mr'=>'nullable|string|max:2000','price'=>'required|numeric|min:0|max:99999999','image'=>'nullable|image|mimes:jpeg,png,webp|max:4096','sort_order'=>'nullable|integer|min:0']);
         $p=isset($d['id'])?Product::findOrFail($d['id']):new Product;
         if($r->hasFile('image')) { if($p->image_path) Storage::disk('public')->delete($p->image_path); $p->image_path=$r->file('image')->store('products','public'); }
-        $p->fill(['category_id'=>$d['category_id'],'name'=>$d['name'],'description'=>$d['description']??null,'price'=>$d['price'],'sort_order'=>$d['sort_order']??0,'is_available'=>$r->boolean('is_available')])->save();
+        $p->fill(['category_id'=>$d['category_id'],'name'=>$d['name'],'name_mr'=>$d['name_mr']??null,'description'=>$d['description']??null,'description_mr'=>$d['description_mr']??null,'price'=>$d['price'],'sort_order'=>$d['sort_order']??0,'is_available'=>$r->boolean('is_available')])->save();
         return back()->with('success','Product saved.');
     }
     public function deleteProduct(Product $product) { if($product->image_path) Storage::disk('public')->delete($product->image_path); $product->delete(); return back()->with('success','Product deleted.'); }
