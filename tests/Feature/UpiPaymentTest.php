@@ -52,7 +52,8 @@ class UpiPaymentTest extends TestCase
         PaymentQrCode::create(['image_path' => 'payment-qr/restaurant.png', 'upi_id' => 'restaurant@bank', 'payee_name' => 'Dine In']);
 
         $this->post(route('orders.store'), [
-            'name' => 'Guest', 'payment_method' => 'upi',
+            'name' => 'Guest',
+            'payment_method' => 'upi',
             'items' => [['id' => $product->id, 'quantity' => 2]],
         ])->assertRedirect(route('orders.confirmation'));
 
