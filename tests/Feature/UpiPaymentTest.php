@@ -22,7 +22,7 @@ class UpiPaymentTest extends TestCase
         $this->post(route('admin.upi-qr.upload'), [
             'qr_image' => UploadedFile::fake()->image('first.png'),
             'upi_id' => 'restaurant@bank',
-            'payee_name' => 'Dine In',
+            'payee_name' => 'Day Night Cafe',
         ])->assertSessionHasNoErrors();
 
         $qr = PaymentQrCode::firstOrFail();
@@ -49,7 +49,7 @@ class UpiPaymentTest extends TestCase
     {
         $category = Category::create(['name' => 'Meals']);
         $product = Product::create(['category_id' => $category->id, 'name' => 'Thali', 'price' => 250]);
-        PaymentQrCode::create(['image_path' => 'payment-qr/restaurant.png', 'upi_id' => 'restaurant@bank', 'payee_name' => 'Dine In']);
+        PaymentQrCode::create(['image_path' => 'payment-qr/restaurant.png', 'upi_id' => 'restaurant@bank', 'payee_name' => 'Day Night Cafe']);
 
         $this->post(route('orders.store'), [
             'name' => 'Guest',

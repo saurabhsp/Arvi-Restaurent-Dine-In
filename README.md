@@ -1,6 +1,6 @@
-# Arvi Restaurant Dine In
+# Arvi Restaurant Day Night Cafe
 
-A Laravel 12 dine in menu for PHP 8.2 or newer. Customers can order without an account. Admins manage categories, products, orders, and one UPI payment QR code.
+A Laravel 12 Day Night Cafe menu for PHP 8.2 or newer. Customers can order without an account. Admins manage categories, products, orders, and one UPI payment QR code.
 
 The site supports English and Marathi interface text, a day/night theme, a compact mobile menu, and horizontal product browsing on phones. Admins can enter Marathi names and descriptions alongside English menu data; when a Marathi field is empty, the English value is shown.
 
